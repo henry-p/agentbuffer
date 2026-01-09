@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AgentBuffer Metrics</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="backdrop"></div>
+    <div class="grain"></div>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Operator Console</p>
+          <h1>AgentBuffer Metrics</h1>
+          <p class="subtitle">Track how effectively you keep agents running, and spot your bottlenecks fast.</p>
+        </div>
+        <div class="status-card">
+          <div class="status-row">
+            <span>Running</span>
+            <strong id="status-running">—</strong>
+          </div>
+          <div class="status-row">
+            <span>Idle</span>
+            <strong id="status-idle">—</strong>
+          </div>
+          <div class="status-row">
+            <span>Total</span>
+            <strong id="status-total">—</strong>
+          </div>
+          <div class="status-row">
+            <span>Utilization</span>
+            <strong id="status-utilization">—</strong>
+          </div>
+        </div>
+      </header>
+
+      <section class="controls">
+        <div class="segmented" role="tablist" aria-label="Time window">
+          <button class="segment is-active" data-window="1h" role="tab" aria-selected="true">Last hour</button>
+          <button class="segment" data-window="24h" role="tab" aria-selected="false">Last 24 hours</button>
+          <button class="segment" data-window="7d" role="tab" aria-selected="false">Last 7 days</button>
+        </div>
+        <div class="meta">
+          <span id="updated-at">Updated —</span>
+        </div>
+      </section>
+
+      <section class="kpi-grid" id="kpi-grid">
+        <article class="kpi-card">
+          <p class="kpi-label">Active Utilization</p>
+          <p class="kpi-value" id="kpi-utilization">—</p>
+          <p class="kpi-foot">Running agent-minutes / total agent-minutes.</p>
+        </article>
+        <article class="kpi-card">
+          <p class="kpi-label">Operator Response</p>
+          <p class="kpi-value" id="kpi-response">—</p>
+          <p class="kpi-foot">Median / p90 to refill tasks.</p>
+        </article>
+        <article class="kpi-card">
+          <p class="kpi-label">Idle Over Threshold</p>
+          <p class="kpi-value" id="kpi-idle">—</p>
+          <p class="kpi-foot">Minutes above idle threshold.</p>
+        </article>
+        <article class="kpi-card">
+          <p class="kpi-label">Throughput</p>
+          <p class="kpi-value" id="kpi-throughput">—</p>
+          <p class="kpi-foot">Tasks completed per hour.</p>
+        </article>
+        <article class="kpi-card">
+          <p class="kpi-label">Bottleneck Index</p>
+          <p class="kpi-value" id="kpi-bottleneck">—</p>
+          <p class="kpi-foot">Response time vs task runtime.</p>
+        </article>
+      </section>
+
+      <section class="charts">
+        <article class="chart-card">
+          <header>
+            <h2>Utilization Trend</h2>
+            <p>Running ratio across the selected window.</p>
+          </header>
+          <canvas id="utilization-chart" width="960" height="220" aria-label="Utilization trend"></canvas>
+        </article>
+        <article class="chart-card">
+          <header>
+            <h2>Response Time Distribution</h2>
+            <p>How long it takes to feed agents after completion.</p>
+          </header>
+          <canvas id="response-chart" width="960" height="220" aria-label="Response time histogram"></canvas>
+        </article>
+      </section>
+
+      <section class="details">
+        <article class="detail-card">
+          <h3>Quality &amp; Efficiency</h3>
+          <div class="detail-grid">
+            <div>
+              <p class="detail-label">Rework Rate</p>
+              <p class="detail-value" id="detail-rework">—</p>
+            </div>
+            <div>
+              <p class="detail-label">Task Fragmentation</p>
+              <p class="detail-value" id="detail-fragmentation">—</p>
+            </div>
+            <div>
+              <p class="detail-label">Long-tail Runtime</p>
+              <p class="detail-value" id="detail-longtail">—</p>
+            </div>
+          </div>
+        </article>
+        <article class="detail-card">
+          <h3>Flow Volume</h3>
+          <div class="detail-grid">
+            <div>
+              <p class="detail-label">Tasks Completed</p>
+              <p class="detail-value" id="detail-completed">—</p>
+            </div>
+            <div>
+              <p class="detail-label">Task Supply Rate</p>
+              <p class="detail-value" id="detail-supply">—</p>
+            </div>
+            <div>
+              <p class="detail-label">Response Samples</p>
+              <p class="detail-value" id="detail-responses">—</p>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

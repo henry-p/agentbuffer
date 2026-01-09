@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>AgentBuffer</string>
+    <key>CFBundleExecutable</key>
+    <string>AgentBuffer</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.agentbuffer.AgentBuffer</string>
+    <key>CFBundleName</key>
+    <string>AgentBuffer</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>AgentBuffer needs permission to focus your terminal tab when you click an agent.</string>
+</dict>
+</plist>

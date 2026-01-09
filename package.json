@@ -1,0 +1,10 @@
+{
+  "name": "agentbuffer",
+  "private": true,
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "build:metrics-web": "scripts/build_metrics_web.sh"
+  }
+}

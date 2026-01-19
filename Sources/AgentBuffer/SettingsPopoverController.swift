@@ -464,6 +464,7 @@ final class SettingsPopoverController: NSViewController {
 
     private let telemetryLabel = NSTextField(labelWithString: "Enable telemetry")
     private let telemetrySwitch = NSSwitch()
+    private let telemetryNote = NSTextField(labelWithString: "Data is completely anonymous.")
 
     private let spinnerLabel = NSTextField(labelWithString: "Force spinner")
     private let spinnerSwitch = NSSwitch()
@@ -611,6 +612,13 @@ final class SettingsPopoverController: NSViewController {
         soundNote.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         soundNote.setContentHuggingPriority(.defaultLow, for: .horizontal)
 
+        telemetryNote.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        telemetryNote.textColor = .tertiaryLabelColor
+        telemetryNote.lineBreakMode = .byWordWrapping
+        telemetryNote.maximumNumberOfLines = 0
+        telemetryNote.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        telemetryNote.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
         styleSwitch(notificationSwitch)
         styleSwitch(telemetrySwitch)
         styleSwitch(spinnerSwitch)
@@ -670,7 +678,7 @@ final class SettingsPopoverController: NSViewController {
             soundRow
         ])
 
-        let telemetryRow = makeToggleRow(leading: telemetryLabel, toggle: telemetrySwitch)
+        let telemetryRow = makeToggleRow(leading: telemetryLabel, toggle: telemetrySwitch, note: telemetryNote)
         self.telemetryRow = telemetryRow
         privacyGroup = makeGroup(rows: [telemetryRow])
 
@@ -827,11 +835,13 @@ final class SettingsPopoverController: NSViewController {
 
     private func makeToggleRow(
         leading: NSView,
-        toggle: NSSwitch
+        toggle: NSSwitch,
+        note: NSTextField? = nil
     ) -> SettingsRowView {
         SettingsRowView(
             leading: leading,
             trailing: toggle,
+            note: note,
             isInteractive: true,
             onClick: { toggle.performClick(nil) }
         )

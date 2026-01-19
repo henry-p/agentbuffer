@@ -55,6 +55,27 @@ AgentBuffer keeps the UI minimal and predictable:
 - **Telemetry** toggle in Settings -> Privacy (see below).
 - **Developer mode** (set `AGENTBUFFER_DEV=1`) enables test tools and visual overrides.
 
+## Avoiding Duplicate Notifications
+
+AgentBuffer can emit notifications, and some agent CLIs can also emit their own. To avoid double notifications, disable the agent-side ones or turn off AgentBuffer notifications in Settings.
+
+### Codex (CLI/TUI)
+
+This is handled via Codex's config file at `~/.codex/config.toml`. Disable TUI notifications so AgentBuffer is the only notifier:
+
+```toml
+[tui]
+notifications = false
+```
+
+### Claude Code
+
+Placeholder for Claude Code notification settings. If Claude adds a CLI/TUI notification toggle, document it here; otherwise use AgentBuffer's notification settings.
+
+### Other Agents
+
+Placeholder for other agent CLIs. Add their notification-disabling instructions here so AgentBuffer can stay as the single source of notifications.
+
 ## Metrics Dashboard (Local-Only)
 
 AgentBuffer runs a tiny local web server and serves a metrics UI and JSON endpoints.

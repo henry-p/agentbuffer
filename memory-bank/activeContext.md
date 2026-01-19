@@ -1,49 +1,36 @@
 # Active Context
 
 ## Current Focus
-- Maintain reliable Codex session detection and numerator updates
-- Keep the menu bar UI minimal (ratio, queue icon gradient + shimmer, bounce dot)
-- Keep file watching with a 1s polling safety net for refreshes
-- Maintain dev settings for spinner and queue icon override
-- Maintain the popover agent list sections (Idle/Running/History) and subtle headers
+- Maintain reliable Codex session detection (pgrep/ps + lsof) and log-tail parsing with bootstrap/shell filtering
+- Keep the menu bar UI minimal (ratio, queue icon gradient + shimmer + idle blink, bouncing dot)
+- Keep file watching for `.codex/sessions` with a 1s polling safety net
+- Maintain popover flows (main, settings, efficiency info) with glass styling and crossfades
+- Keep alerts, sound availability gating, and notification permission flow stable
+- Maintain local metrics dashboard + developer tooling (simulation, overrides)
 
 ## Current Behavior
-- Queue icon uses a continuous white-to-yellow-to-red gradient based on running/total (inverted: more running = whiter) with a shimmer pass when agents are running
-- 0/0 is treated as a neutral idle state with a white queue icon
-- Status text shows running/total plus a dot spinner (idle when nothing is running, bouncing while running or forced)
-- Popover shows Idle/Running/History sections with small grey headers
-- Pause button beside the main headline toggles animation pause; paused dims the menu bar icon and suppresses idle alerts
-- Running/Idle/History cards use the latest non-bootstrap user message clipped to a single-line title
-- Agent badges use logo glyphs for known agents (OpenAI/Anthropic) with a monospaced text fallback
-- Running cards show runtime values and a thin runtime bar scaled to the longest-running agent; list is sorted by longest runtime
-- Idle agents are derived from finished sessions; History shows recent finished transitions with a Load more option
-- Plays a sound + macOS notification when idle share crosses a configurable threshold (>=) after being below it; no alert on launch if already above
-- Popover includes summary/suggestion, the agent list sections, and footer actions (Settings, Quit); Test Notification lives in Developer settings
-- Settings live as a single page inside the same popover with accordion section headers (Alerts/Privacy/Developer) that expand/collapse; Done exits settings
-- Permission prompts show a brief floating window to ensure the app is active
-- File watcher tracks the `.codex/sessions` tree and caps watches to the 250 most recent day folders
-- Codex session parsing scans backward from log tails to find the latest user/assistant events
-- Compaction log events are emitted only after completion, so they are treated as finished (assistant) to avoid a post-compaction "running" blip
-- Refresh work runs off the main thread; menu bar stays responsive
-- Dev logging emits only on state changes or PID-set changes
-- Dev watch script exits when the app is manually closed
-- Agent cards are clickable across all sections with hover highlights and pointing-hand cursor
-- Notification clicks route to the most recently finished agent tab when available
-- Settings use a System Settings-style grouped list with row separators, accordion headers, left labels, and right-aligned controls (switches, sliders, and action buttons)
-- Settings include notifications toggle plus a sound mode selector (Off/Glass/System) with System gated by macOS notification sound availability
-- Telemetry events are sent through OpenPanel when enabled, with app-lifecycle auto tracking via the proxy endpoint
-- Telemetry covers UI interactions and low-volume state transitions without collecting agent titles, PIDs, or file paths
-- Terminal tab focus uses PID→TTY lookup and AppleScript automation (iTerm2/Terminal)
-- Settings interaction uses switch controls instead of checkbox rows
-- Popover and notification prompt use a glass material background (no legacy fallback); settings groups are transparent with separators to avoid glass stacking
-- Settings ↔ main page transitions use a short crossfade for a more fluid feel
-- Settings accordion sections expand/collapse in place with a single rounded container border and a short animation (no topic/detail navigation)
-- Local-only Swift metrics web service runs in-process, serving a metrics dashboard and JSON endpoints from bundled resources; discovery info is written in Application Support.
+- Queue icon uses a continuous white-to-yellow-to-red gradient based on running/total (more running = whiter) with shimmer when agents are running and blink when idle threshold is exceeded or no agents are detected
+- Status text shows running/total plus a bouncing dot spinner; paused state dims the icon and suppresses animations/alerts
+- Refresh loop uses a background queue plus a file watcher on `.codex/sessions` (root + recent year/month/day dirs, capped at 250) and a 1s polling fallback
+- Codex session parsing scans log tails for the latest user/assistant events, ignores bootstrap + shell-command messages, uses session meta instructions to filter, and treats compaction as assistant completion
+- Running list is sorted by longest runtime; runtime bars scale to the longest-running agent; idle list is derived from finished sessions; History shows recent finished transitions with Load more
+- Agent cards show OpenAI/Anthropic logo badges (fallback to monospaced text) and clipped task titles; cards are clickable across sections with hover highlights and pointer cursor
+- Main popover includes a pause button, summary row with an Efficiency info icon, Idle/Running/History sections, and footer actions (Metrics, Settings, Quit)
+- Efficiency popover shows a thumb gauge tinted to the pressure color, rotated by utilization, and a short contextual message
+- Settings popover uses accordion sections (Alerts/Privacy/Developer) with crossfade transitions and glass styling; Alerts include idle threshold slider with snap points + double-click reset, notification toggle, and sound mode segmented control with system availability notes; Privacy includes telemetry toggle; Developer includes force spinner, queue icon override slider, test notification, and simulate agents
+- Idle alert triggers on threshold crossings after being below it (or rising idle after launch), plays Glass/System sound based on availability, and posts a notification containing the most recent finished PID for click-to-focus
+- Notification permission flow shows a brief glass prompt window to ensure the app is active before requesting access
+- Local-only metrics web server runs in-process (127.0.0.1, auto-incremented port) serving a dashboard and `/api/summary`, `/api/timeseries`, `/api/health`; discovery info is written to Application Support
+- Metrics compute utilization, response time (median/p90), idle-over-threshold minutes, throughput, task supply rate, bottleneck index, rework rate, fragmentation, and long-tail runtime from session logs
+- Telemetry events are sent through OpenPanel via proxy when enabled; opt-in/out always allowed; no agent titles, PIDs, or file paths collected
+- Terminal tab focus uses PID→TTY lookup and AppleScript automation (iTerm2/Terminal); notification clicks focus the most recently finished agent
+- Single-instance lock prevents multiple running app instances; dev logging emits only on state/PID changes and dev watch exits when the app is manually closed
 
 ## Next Steps
 - Add additional agent integrations (e.g., Claude Code)
 
 ## Decisions & Considerations
-- Standard mode only
+- Standard mode only; no predictions or scheduling
+- Metrics are local-only and derived from existing session logs
 - Task boundaries rely on agent-specific integrations
 - No reliable "compaction started" signal exists in Codex logs; only completion is logged

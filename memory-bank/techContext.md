@@ -2,8 +2,13 @@
 
 ## Technologies Used
 - Swift 5.9
-- AppKit for macOS menu bar UI
-- DispatchSource for filesystem events
+- AppKit for macOS menu bar UI (NSStatusItem, popovers, NSVisualEffectView)
+- UserNotifications for alerts
+- DispatchSource + Timer for filesystem events/polling
+- Network framework (NWListener) for the local metrics server
+- CoreImage for efficiency thumb colorization
+- AppleScript automation for Terminal/iTerm2 focus
+- HTML/CSS/TypeScript (compiled to JS) for the metrics dashboard UI
 - Swift Package Manager
 - OpenPanel Swift SDK (telemetry)
 
@@ -16,6 +21,8 @@
 
 ## Technical Constraints
 - macOS 13 or newer
+- Notifications/system sound availability depend on bundle mode + OS permissions
+- Metrics server binds to 127.0.0.1 and auto-increments port if busy
 - Telemetry sends network requests only when enabled
 
 ## Dependencies

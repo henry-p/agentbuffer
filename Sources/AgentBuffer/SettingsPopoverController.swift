@@ -783,6 +783,7 @@ final class SettingsPopoverController: NSViewController {
         let stack = NSStackView(views: rows)
         stack.orientation = .vertical
         stack.spacing = 0
+        stack.alignment = .leading
         stack.translatesAutoresizingMaskIntoConstraints = false
 
         let group = SettingsGroupView()
@@ -797,6 +798,10 @@ final class SettingsPopoverController: NSViewController {
             stack.topAnchor.constraint(equalTo: group.topAnchor),
             stack.bottomAnchor.constraint(equalTo: group.bottomAnchor)
         ])
+
+        for row in rows {
+            row.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        }
 
         for (index, row) in rows.enumerated() {
             row.setShowsSeparator(index < rows.count - 1)

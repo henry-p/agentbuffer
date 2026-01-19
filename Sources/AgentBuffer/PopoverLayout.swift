@@ -1,7 +1,7 @@
 import AppKit
 
 enum PopoverLayout {
-    static let width: CGFloat = 280
+    static let width: CGFloat = 500
     static let height: CGFloat = 590
     static let stackSpacing: CGFloat = 10
     static let horizontalInset: CGFloat = 16

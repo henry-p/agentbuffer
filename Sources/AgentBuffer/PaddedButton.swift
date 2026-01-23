@@ -14,7 +14,6 @@ final class PaddedButton: NSButton {
     }
 
     private let hoverBackgroundColor = NSColor.black.withAlphaComponent(0.08)
-    private let hoverInset = CGSize(width: 3, height: 2)
     private var hoverTrackingArea: NSTrackingArea?
     private var isHovering = false
     private let hoverLayer = CALayer()
@@ -130,12 +129,8 @@ final class PaddedButton: NSButton {
     }
 
     private func updateHoverLayerFrame() {
-        let insetBounds = bounds.insetBy(
-            dx: hoverInset.width,
-            dy: hoverInset.height
-        )
-        hoverLayer.frame = insetBounds
-        hoverLayer.cornerRadius = insetBounds.height / 2
+        hoverLayer.frame = bounds
+        hoverLayer.cornerRadius = bounds.height / 2
     }
 
     private func updateHoverAppearance() {

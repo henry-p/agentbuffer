@@ -40,6 +40,14 @@ log() {
     printf '%s\n' "$*" >&2
 }
 
+timestamp() {
+    date "+%Y-%m-%d %H:%M:%S"
+}
+
+log_build_success() {
+    log "Build succeeded at $(timestamp)."
+}
+
 for arg in "$@"; do
     case "$arg" in
         --watch)
@@ -71,6 +79,7 @@ build_app() {
             return 1
         fi
     fi
+    log_build_success
     return 0
 }
 

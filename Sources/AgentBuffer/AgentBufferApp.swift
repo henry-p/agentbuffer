@@ -426,7 +426,7 @@ final class AgentBufferApp: NSObject, NSApplicationDelegate, UNUserNotificationC
 
     private func summaryText(running: Int, total: Int, includeExtensionNote: Bool) -> String {
         if includeExtensionNote {
-            return "\(running) out of \(total) agents running (includes extension-hosted sessions)."
+            return "\(running) out of \(total) agents running (includes sessions hosted in external applications)."
         }
         return "\(running) out of \(total) agents running."
     }

@@ -43,7 +43,7 @@ final class AgentBufferApp: NSObject, NSApplicationDelegate, UNUserNotificationC
     private var lastTrackedCounts: (running: Int, idle: Int, total: Int)?
     private let refreshQueue = DispatchQueue(label: "AgentBuffer.Refresh", qos: .utility)
     private var refreshInFlight = false
-    private var includesCursorCodex = false
+    private var includesExtensionHostedCodex = false
     private var idleAlertInitialized = false
     private var idleAlertActive = false
     private var idleAlertPrimed = false
@@ -316,14 +316,14 @@ final class AgentBufferApp: NSObject, NSApplicationDelegate, UNUserNotificationC
             }
             let pids = self.reader.currentPids().sorted()
             let pidSignature = self.pidSignature(for: pids)
-            let includesCursor = self.containsCursorCodexSession(pids: pids)
+            let includesExtensionHosted = self.containsExtensionHostedCodexSession(pids: pids)
             let snapshot = self.reader.readSnapshot()
             DispatchQueue.main.async { [weak self] in
                 guard let self else {
                     return
                 }
                 self.lastPidSignature = pidSignature
-                self.includesCursorCodex = includesCursor
+                self.includesExtensionHostedCodex = includesExtensionHosted
                 self.refreshInFlight = false
                 self.update(snapshot: snapshot)
             }
@@ -390,7 +390,7 @@ final class AgentBufferApp: NSObject, NSApplicationDelegate, UNUserNotificationC
         let summary = summaryText(
             running: displaySnapshot.runningCount,
             total: displaySnapshot.totalCount,
-            includeCursorNote: includesCursorCodex && !simulate
+            includeExtensionNote: includesExtensionHostedCodex && !simulate
         )
         popoverCoordinator?.updateMain(
             summary: summary,
@@ -424,9 +424,9 @@ final class AgentBufferApp: NSObject, NSApplicationDelegate, UNUserNotificationC
         recentAgents = Array(merged.prefix(5))
     }
 
-    private func summaryText(running: Int, total: Int, includeCursorNote: Bool) -> String {
-        if includeCursorNote {
-            return "\(running) out of \(total) agents running (includes Cursor extension)."
+    private func summaryText(running: Int, total: Int, includeExtensionNote: Bool) -> String {
+        if includeExtensionNote {
+            return "\(running) out of \(total) agents running (includes extension-hosted sessions)."
         }
         return "\(running) out of \(total) agents running."
     }
@@ -508,23 +508,39 @@ final class AgentBufferApp: NSObject, NSApplicationDelegate, UNUserNotificationC
         pids.map(String.init).joined(separator: ",")
     }
 
-    private func containsCursorCodexSession(pids: [Int]) -> Bool {
+    private func containsExtensionHostedCodexSession(pids: [Int]) -> Bool {
         guard !pids.isEmpty else {
             return false
         }
         for pid in pids {
             guard let command = AgentBufferApp.runCommand(
                 "/bin/ps",
-                arguments: ["-o", "comm=", "-p", String(pid)]
+                arguments: ["-o", "command=", "-p", String(pid)]
             )?
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased() else {
                 continue
             }
-            if command.contains("codex")
-                && (command.contains("/.cursor/") || command.contains("cursor.app")) {
+            let executable = command.split(whereSeparator: { $0 == " " || $0 == "\t" }).first.map(String.init) ?? command
+            guard !executable.isEmpty else {
+                continue
+            }
+            if isExtensionHostedCodex(executable: executable) {
                 return true
             }
+        }
+        return false
+    }
+
+    private func isExtensionHostedCodex(executable: String) -> Bool {
+        if executable == "codex" {
+            return false
+        }
+        if executable.contains("/extensions/") || executable.contains("/extension/") {
+            return true
+        }
+        if executable.contains("/.cursor/") || executable.contains("/.vscode/") {
+            return true
         }
         return false
     }

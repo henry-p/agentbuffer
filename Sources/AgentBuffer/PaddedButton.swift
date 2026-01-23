@@ -13,7 +13,9 @@ final class PaddedButton: NSButton {
         }
     }
 
-    private let pressedAlpha: CGFloat = 0.65
+    private let hoverBackgroundColor = NSColor.black.withAlphaComponent(0.08)
+    private var hoverTrackingArea: NSTrackingArea?
+    private var isHovering = false
 
     var titleFont: NSFont? {
         didSet {
@@ -35,15 +37,62 @@ final class PaddedButton: NSButton {
         )
     }
 
-    override func mouseDown(with event: NSEvent) {
-        let previousAlpha = alphaValue
-        alphaValue = min(previousAlpha, pressedAlpha)
-        defer { alphaValue = previousAlpha }
-        super.mouseDown(with: event)
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        configureLayer()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        configureLayer()
+    }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let hoverTrackingArea {
+            removeTrackingArea(hoverTrackingArea)
+        }
+        let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeInKeyWindow, .inVisibleRect]
+        let tracking = NSTrackingArea(rect: bounds, options: options, owner: self, userInfo: nil)
+        addTrackingArea(tracking)
+        hoverTrackingArea = tracking
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        super.mouseEntered(with: event)
+        isHovering = true
+        updateHoverAppearance()
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        super.mouseExited(with: event)
+        isHovering = false
+        updateHoverAppearance()
+    }
+
+    override var isEnabled: Bool {
+        didSet {
+            updateHoverAppearance()
+        }
+    }
+
+    private func configureLayer() {
+        wantsLayer = true
+        layer?.cornerRadius = 6
+        layer?.cornerCurve = .continuous
+    }
+
+    private func updateHoverAppearance() {
+        guard isEnabled else {
+            layer?.backgroundColor = nil
+            return
+        }
+        layer?.backgroundColor = isHovering ? hoverBackgroundColor.cgColor : nil
     }
 
     func applyStyle(_ style: PaddedButtonStyle) {
         bezelStyle = .inline
+        isBordered = false
         focusRingType = .none
         if let cell = cell as? NSButtonCell {
             cell.highlightsBy = []

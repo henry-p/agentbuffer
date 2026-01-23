@@ -70,29 +70,26 @@ final class PopoverRootController: NSViewController {
         addChild(controller)
         currentController = controller
 
-        let halfDuration = transitionDuration / 2
+        let incomingView = controller.view
+        incomingView.frame = view.bounds
+        incomingView.autoresizingMask = [.width, .height]
+        incomingView.alphaValue = 0
+        view.addSubview(incomingView, positioned: .above, relativeTo: outgoing.view)
+        incomingView.layoutSubtreeIfNeeded()
+        incomingView.displayIfNeeded()
+
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = halfDuration
+            context.duration = transitionDuration
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             outgoing.view.animator().alphaValue = 0
-        } completionHandler: { [weak self, weak outgoing] in
-            guard let self, let outgoing else {
+            incomingView.animator().alphaValue = 1
+        } completionHandler: { [weak outgoing] in
+            guard let outgoing else {
                 return
             }
             outgoing.view.removeFromSuperview()
             outgoing.view.alphaValue = 1
             outgoing.removeFromParent()
-
-            let incomingView = controller.view
-            incomingView.frame = self.view.bounds
-            incomingView.autoresizingMask = [.width, .height]
-            incomingView.alphaValue = 0
-            self.view.addSubview(incomingView)
-            incomingView.layoutSubtreeIfNeeded()
-            incomingView.displayIfNeeded()
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = halfDuration
-                incomingView.animator().alphaValue = 1
-            }
         }
     }
 }

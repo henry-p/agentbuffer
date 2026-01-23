@@ -13,6 +13,8 @@ final class PaddedButton: NSButton {
         }
     }
 
+    private let pressedAlpha: CGFloat = 0.65
+
     var titleFont: NSFont? {
         didSet {
             applyTitleAttributes()
@@ -33,8 +35,19 @@ final class PaddedButton: NSButton {
         )
     }
 
+    override func mouseDown(with event: NSEvent) {
+        let previousAlpha = alphaValue
+        alphaValue = min(previousAlpha, pressedAlpha)
+        defer { alphaValue = previousAlpha }
+        super.mouseDown(with: event)
+    }
+
     func applyStyle(_ style: PaddedButtonStyle) {
         bezelStyle = .inline
+        focusRingType = .none
+        if let cell = cell as? NSButtonCell {
+            cell.highlightsBy = []
+        }
         switch style {
         case .standard:
             controlSize = .regular

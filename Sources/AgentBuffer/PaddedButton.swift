@@ -13,7 +13,12 @@ final class PaddedButton: NSButton {
         }
     }
 
-    private let hoverBackgroundColor = NSColor.black.withAlphaComponent(0.08)
+    private let hoverBackgroundColor = NSColor(name: nil) { appearance in
+        if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
+            return NSColor.white.withAlphaComponent(0.12)
+        }
+        return NSColor.black.withAlphaComponent(0.08)
+    }
     private var hoverTrackingArea: NSTrackingArea?
     private var isHovering = false
     private let hoverLayer = CALayer()
@@ -80,6 +85,12 @@ final class PaddedButton: NSButton {
         super.layout()
         updateCornerRadius()
         updateHoverLayerFrame()
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        hoverLayer.backgroundColor = hoverBackgroundColor.cgColor
+        updateHoverAppearance()
     }
 
     override func updateTrackingAreas() {

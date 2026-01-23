@@ -14,8 +14,10 @@ final class PaddedButton: NSButton {
     }
 
     private let hoverBackgroundColor = NSColor.black.withAlphaComponent(0.08)
+    private let hoverInset = CGSize(width: 3, height: 2)
     private var hoverTrackingArea: NSTrackingArea?
     private var isHovering = false
+    private let hoverLayer = CALayer()
 
     var titleFont: NSFont? {
         didSet {
@@ -78,6 +80,7 @@ final class PaddedButton: NSButton {
     override func layout() {
         super.layout()
         updateCornerRadius()
+        updateHoverLayerFrame()
     }
 
     override func updateTrackingAreas() {
@@ -113,19 +116,34 @@ final class PaddedButton: NSButton {
         wantsLayer = true
         layer?.cornerCurve = .continuous
         layer?.masksToBounds = true
+        hoverLayer.backgroundColor = hoverBackgroundColor.cgColor
+        hoverLayer.cornerCurve = .continuous
+        hoverLayer.isHidden = true
+        hoverLayer.zPosition = -1
+        layer?.addSublayer(hoverLayer)
         updateCornerRadius()
+        updateHoverLayerFrame()
     }
 
     private func updateCornerRadius() {
         layer?.cornerRadius = bounds.height / 2
     }
 
+    private func updateHoverLayerFrame() {
+        let insetBounds = bounds.insetBy(
+            dx: hoverInset.width,
+            dy: hoverInset.height
+        )
+        hoverLayer.frame = insetBounds
+        hoverLayer.cornerRadius = insetBounds.height / 2
+    }
+
     private func updateHoverAppearance() {
         guard isEnabled else {
-            layer?.backgroundColor = nil
+            hoverLayer.isHidden = true
             return
         }
-        layer?.backgroundColor = isHovering ? hoverBackgroundColor.cgColor : nil
+        hoverLayer.isHidden = !isHovering
     }
 
     func applyStyle(_ style: PaddedButtonStyle) {

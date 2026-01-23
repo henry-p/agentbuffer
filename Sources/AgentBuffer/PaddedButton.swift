@@ -153,17 +153,17 @@ final class PaddedButton: NSButton {
             controlSize = .regular
             let font = NSFont.systemFont(ofSize: NSFont.systemFontSize + 1, weight: .semibold)
             titleFont = font
-            contentInsets = NSEdgeInsets(top: 1, left: 6, bottom: 1, right: 6)
+            contentInsets = NSEdgeInsets(top: 4, left: 12, bottom: 4, right: 12)
         case .medium:
             controlSize = .small
             let font = NSFont.systemFont(ofSize: NSFont.systemFontSize + 1, weight: .semibold)
             titleFont = font
-            contentInsets = NSEdgeInsets(top: 1, left: 6, bottom: 1, right: 6)
+            contentInsets = NSEdgeInsets(top: 3, left: 10, bottom: 3, right: 10)
         case .compact:
             controlSize = .small
             let font = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .semibold)
             titleFont = font
-            contentInsets = NSEdgeInsets(top: 1, left: 5, bottom: 1, right: 5)
+            contentInsets = NSEdgeInsets(top: 2, left: 8, bottom: 2, right: 8)
         }
     }
 

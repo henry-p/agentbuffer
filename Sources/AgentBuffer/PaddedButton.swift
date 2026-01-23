@@ -55,6 +55,26 @@ final class PaddedButton: NSButton {
         }
     }
 
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window == nil {
+            isHovering = false
+            updateHoverAppearance()
+        }
+    }
+
+    override func viewDidHide() {
+        super.viewDidHide()
+        isHovering = false
+        updateHoverAppearance()
+    }
+
+    override func viewDidUnhide() {
+        super.viewDidUnhide()
+        isHovering = false
+        updateHoverAppearance()
+    }
+
     override func layout() {
         super.layout()
         updateCornerRadius()

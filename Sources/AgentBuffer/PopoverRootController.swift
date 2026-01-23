@@ -5,7 +5,7 @@ final class PopoverRootController: NSViewController {
     private let settingsController: SettingsPopoverController
     private let infoController: InfoPopoverController
     private var currentController: NSViewController?
-    private let transitionDuration: TimeInterval = 0.1
+    private let transitionDuration: TimeInterval = 0.06
 
     init(
         mainController: MainPopoverController,
@@ -78,16 +78,13 @@ final class PopoverRootController: NSViewController {
         incomingView.layoutSubtreeIfNeeded()
         incomingView.displayIfNeeded()
 
+        outgoing.view.removeFromSuperview()
+        outgoing.removeFromParent()
+
         NSAnimationContext.runAnimationGroup { context in
             context.duration = transitionDuration
             context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             incomingView.animator().alphaValue = 1
-        } completionHandler: { [weak outgoing] in
-            guard let outgoing else {
-                return
-            }
-            outgoing.view.removeFromSuperview()
-            outgoing.removeFromParent()
         }
     }
 }

@@ -47,6 +47,19 @@ final class PaddedButton: NSButton {
         configureLayer()
     }
 
+    override func viewWillMove(toSuperview newSuperview: NSView?) {
+        super.viewWillMove(toSuperview: newSuperview)
+        if newSuperview == nil {
+            isHovering = false
+            updateHoverAppearance()
+        }
+    }
+
+    override func layout() {
+        super.layout()
+        updateCornerRadius()
+    }
+
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
         if let hoverTrackingArea {
@@ -78,8 +91,13 @@ final class PaddedButton: NSButton {
 
     private func configureLayer() {
         wantsLayer = true
-        layer?.cornerRadius = 6
         layer?.cornerCurve = .continuous
+        layer?.masksToBounds = true
+        updateCornerRadius()
+    }
+
+    private func updateCornerRadius() {
+        layer?.cornerRadius = bounds.height / 2
     }
 
     private func updateHoverAppearance() {

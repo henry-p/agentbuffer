@@ -62,6 +62,9 @@ final class CodexSessionReader: AgentProvider {
         var sessionInstructions: String?
         var lastUserMessage: String?
         var sessionStartDate: Date?
+        var sessionCwd: URL?
+        var agentsInstructions: String?
+        var metaLoaded: Bool
 
         init(url: URL) {
             self.url = url
@@ -73,6 +76,9 @@ final class CodexSessionReader: AgentProvider {
             self.sessionInstructions = nil
             self.lastUserMessage = nil
             self.sessionStartDate = CodexSessionReader.sessionStartDate(from: url)
+            self.sessionCwd = nil
+            self.agentsInstructions = nil
+            self.metaLoaded = false
         }
     }
 
@@ -218,11 +224,20 @@ final class CodexSessionReader: AgentProvider {
         if tracker.sessionStartDate == nil {
             tracker.sessionStartDate = CodexSessionReader.sessionStartDate(from: url)
         }
-        if tracker.sessionInstructions == nil {
-            tracker.sessionInstructions = readSessionInstructions(url: url)
+        if !tracker.metaLoaded {
+            let meta = readSessionMeta(url: url)
+            tracker.sessionInstructions = meta.instructions
+            tracker.sessionCwd = meta.cwd
+            tracker.agentsInstructions = loadAgentsInstructions(cwd: meta.cwd)
+            tracker.metaLoaded = true
         }
         if tracker.lastFileSize != size || tracker.lastEvent == nil {
-            let scan = scanLatestEvents(url: url, size: size, sessionInstructions: tracker.sessionInstructions)
+            let scan = scanLatestEvents(
+                url: url,
+                size: size,
+                sessionInstructions: tracker.sessionInstructions,
+                agentsInstructions: tracker.agentsInstructions
+            )
             tracker.lastUserDate = scan.lastUserDate
             tracker.lastAssistantDate = scan.lastAssistantDate
             tracker.lastEvent = scan.lastEvent
@@ -291,11 +306,23 @@ final class CodexSessionReader: AgentProvider {
 
     private struct SessionMetaPayload: Decodable {
         let instructions: String?
+        let cwd: String?
+        let baseInstructions: BaseInstructions?
+
+        enum CodingKeys: String, CodingKey {
+            case instructions
+            case cwd
+            case baseInstructions = "base_instructions"
+        }
     }
 
-    private func readSessionInstructions(url: URL) -> String? {
+    private struct BaseInstructions: Decodable {
+        let text: String?
+    }
+
+    private func readSessionMeta(url: URL) -> (instructions: String?, cwd: URL?) {
         guard let handle = try? FileHandle(forReadingFrom: url) else {
-            return nil
+            return (nil, nil)
         }
         defer { try? handle.close() }
         let chunkSize = 64 * 1024
@@ -312,20 +339,38 @@ final class CodexSessionReader: AgentProvider {
             buffer.append(chunk)
         }
         guard !buffer.isEmpty else {
-            return nil
+            return (nil, nil)
         }
         let decoder = JSONDecoder()
         guard let meta = try? decoder.decode(SessionMetaEnvelope.self, from: buffer),
               meta.type == "session_meta" else {
+            return (nil, nil)
+        }
+        let instructions = meta.payload?.instructions ?? meta.payload?.baseInstructions?.text
+        let cwd = meta.payload?.cwd.map { URL(fileURLWithPath: $0) }
+        return (instructions, cwd)
+    }
+
+    private func loadAgentsInstructions(cwd: URL?) -> String? {
+        guard let cwd else { return nil }
+        let agentsURL = cwd.appendingPathComponent("AGENTS.md")
+        guard let content = try? String(contentsOf: agentsURL, encoding: .utf8) else {
             return nil
         }
-        return meta.payload?.instructions
+        return normalizeText(content)
+    }
+
+    private func normalizeText(_ text: String) -> String {
+        return text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func scanLatestEvents(
         url: URL,
         size: UInt64,
-        sessionInstructions: String?
+        sessionInstructions: String?,
+        agentsInstructions: String?
     ) -> (lastUserDate: Date?, lastAssistantDate: Date?, lastEvent: TurnEvent?, lastUserMessage: String?) {
         let decoder = JSONDecoder()
         guard let handle = try? FileHandle(forReadingFrom: url) else {
@@ -351,13 +396,8 @@ final class CodexSessionReader: AgentProvider {
             return false
         }
 
-        func isAgentsInstructionText(_ trimmed: String) -> Bool {
-            return trimmed.hasPrefix("# AGENTS.md instructions for ")
-                || trimmed.hasPrefix("AGENTS.md instructions for ")
-        }
-
         func isBootstrapUserText(_ text: String) -> Bool {
-            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            let trimmed = normalizeText(text)
             if trimmed.isEmpty {
                 return true
             }
@@ -367,7 +407,8 @@ final class CodexSessionReader: AgentProvider {
             if trimmed.hasPrefix("<user_instructions>") {
                 return true
             }
-            if isAgentsInstructionText(trimmed) {
+            if let agentsInstructions, !agentsInstructions.isEmpty,
+               trimmed.contains(agentsInstructions) {
                 return true
             }
             if let sessionInstructions, !sessionInstructions.isEmpty,

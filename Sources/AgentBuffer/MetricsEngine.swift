@@ -85,13 +85,13 @@ final class MetricsEngine {
             }
             let lines = content.split(whereSeparator: \.isNewline).map(String.init)
             guard !lines.isEmpty else { continue }
-            let instructions = parseSessionInstructions(from: lines.first)
+            let meta = parseSessionMeta(from: lines.first)
             var events: [MetricsEvent] = []
             events.reserveCapacity(lines.count)
             for line in lines {
                 guard let data = line.data(using: .utf8),
                       let event = try? decoder.decode(CodexEvent.self, from: data),
-                      let classified = classify(event: event, sessionInstructions: instructions) else {
+                      let classified = classify(event: event, sessionMeta: meta) else {
                     continue
                 }
                 events.append(classified)
@@ -478,17 +478,24 @@ private func tokenize(_ text: String?) -> Set<String> {
     return tokens
 }
 
-private func parseSessionInstructions(from line: String?) -> String? {
+private struct SessionMeta {
+    let instructions: String?
+    let agentsInstructions: String?
+}
+
+private func parseSessionMeta(from line: String?) -> SessionMeta {
     guard let line,
           let data = line.data(using: .utf8),
           let meta = try? JSONDecoder().decode(SessionMetaEnvelope.self, from: data),
           meta.type == "session_meta" else {
-        return nil
+        return SessionMeta(instructions: nil, agentsInstructions: nil)
     }
-    return meta.payload?.instructions
+    let instructions = meta.payload?.instructions ?? meta.payload?.baseInstructions?.text
+    let agentsInstructions = loadAgentsInstructions(cwdPath: meta.payload?.cwd)
+    return SessionMeta(instructions: instructions, agentsInstructions: agentsInstructions)
 }
 
-private func classify(event: CodexEvent, sessionInstructions: String?) -> MetricsEvent? {
+private func classify(event: CodexEvent, sessionMeta: SessionMeta) -> MetricsEvent? {
     guard let timestamp = event.timestamp,
           let date = parseTimestamp(timestamp) else {
         return nil
@@ -502,7 +509,8 @@ private func classify(event: CodexEvent, sessionInstructions: String?) -> Metric
             return MetricsEvent(t: date.timeIntervalSince1970, kind: .assistant, text: nil)
         }
         if payload?.type == "user_message" {
-            if let text = userMessageText(event: event), !isIgnoredUserText(text, sessionInstructions: sessionInstructions) {
+            if let text = userMessageText(event: event),
+               !isIgnoredUserText(text, sessionInstructions: sessionMeta.instructions, agentsInstructions: sessionMeta.agentsInstructions) {
                 return MetricsEvent(t: date.timeIntervalSince1970, kind: .user, text: text)
             }
             return nil
@@ -514,7 +522,8 @@ private func classify(event: CodexEvent, sessionInstructions: String?) -> Metric
     if event.type == "response_item", let payload,
        payload.type == "message", let role = payload.role {
         if role == "user" {
-            if let text = userMessageText(event: event), !isIgnoredUserText(text, sessionInstructions: sessionInstructions) {
+            if let text = userMessageText(event: event),
+               !isIgnoredUserText(text, sessionInstructions: sessionMeta.instructions, agentsInstructions: sessionMeta.agentsInstructions) {
                 return MetricsEvent(t: date.timeIntervalSince1970, kind: .user, text: text)
             }
             return nil
@@ -541,16 +550,15 @@ private func userMessageText(event: CodexEvent) -> String? {
     return nil
 }
 
-private func isIgnoredUserText(_ text: String, sessionInstructions: String?) -> Bool {
-    if isBootstrapUserText(text, sessionInstructions: sessionInstructions) {
+private func isIgnoredUserText(
+    _ text: String,
+    sessionInstructions: String?,
+    agentsInstructions: String?
+) -> Bool {
+    if isBootstrapUserText(text, sessionInstructions: sessionInstructions, agentsInstructions: agentsInstructions) {
         return true
     }
     return isShellCommandUserText(text)
-}
-
-private func isAgentsInstructionText(_ trimmed: String) -> Bool {
-    return trimmed.hasPrefix("# AGENTS.md instructions for ")
-        || trimmed.hasPrefix("AGENTS.md instructions for ")
 }
 
 private func isShellCommandUserText(_ text: String) -> Bool {
@@ -558,16 +566,38 @@ private func isShellCommandUserText(_ text: String) -> Bool {
     return trimmed.hasPrefix("!") || trimmed.hasPrefix("<user_shell_command>")
 }
 
-private func isBootstrapUserText(_ text: String, sessionInstructions: String?) -> Bool {
-    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+private func isBootstrapUserText(
+    _ text: String,
+    sessionInstructions: String?,
+    agentsInstructions: String?
+) -> Bool {
+    let trimmed = normalizeText(text)
     if trimmed.isEmpty { return true }
     if trimmed.hasPrefix("<environment_context>") { return true }
     if trimmed.hasPrefix("<user_instructions>") { return true }
-    if isAgentsInstructionText(trimmed) { return true }
+    if let agentsInstructions, !agentsInstructions.isEmpty,
+       trimmed.contains(agentsInstructions) {
+        return true
+    }
     if let sessionInstructions, !sessionInstructions.isEmpty, trimmed.contains(sessionInstructions) {
         return true
     }
     return false
+}
+
+private func loadAgentsInstructions(cwdPath: String?) -> String? {
+    guard let cwdPath else { return nil }
+    let agentsURL = URL(fileURLWithPath: cwdPath).appendingPathComponent("AGENTS.md")
+    guard let content = try? String(contentsOf: agentsURL, encoding: .utf8) else {
+        return nil
+    }
+    return normalizeText(content)
+}
+
+private func normalizeText(_ text: String) -> String {
+    return text
+        .replacingOccurrences(of: "\r\n", with: "\n")
+        .trimmingCharacters(in: .whitespacesAndNewlines)
 }
 
 private func isoString(_ date: Date) -> String {
@@ -602,4 +632,16 @@ private struct SessionMetaEnvelope: Decodable {
 
 private struct SessionMetaPayload: Decodable {
     let instructions: String?
+    let cwd: String?
+    let baseInstructions: BaseInstructions?
+
+    enum CodingKeys: String, CodingKey {
+        case instructions
+        case cwd
+        case baseInstructions = "base_instructions"
+    }
+}
+
+private struct BaseInstructions: Decodable {
+    let text: String?
 }

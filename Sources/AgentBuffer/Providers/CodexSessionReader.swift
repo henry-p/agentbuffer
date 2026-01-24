@@ -351,6 +351,11 @@ final class CodexSessionReader: AgentProvider {
             return false
         }
 
+        func isAgentsInstructionText(_ trimmed: String) -> Bool {
+            return trimmed.hasPrefix("# AGENTS.md instructions for ")
+                || trimmed.hasPrefix("AGENTS.md instructions for ")
+        }
+
         func isBootstrapUserText(_ text: String) -> Bool {
             let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
             if trimmed.isEmpty {
@@ -360,6 +365,9 @@ final class CodexSessionReader: AgentProvider {
                 return true
             }
             if trimmed.hasPrefix("<user_instructions>") {
+                return true
+            }
+            if isAgentsInstructionText(trimmed) {
                 return true
             }
             if let sessionInstructions, !sessionInstructions.isEmpty,

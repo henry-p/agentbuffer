@@ -548,6 +548,11 @@ private func isIgnoredUserText(_ text: String, sessionInstructions: String?) -> 
     return isShellCommandUserText(text)
 }
 
+private func isAgentsInstructionText(_ trimmed: String) -> Bool {
+    return trimmed.hasPrefix("# AGENTS.md instructions for ")
+        || trimmed.hasPrefix("AGENTS.md instructions for ")
+}
+
 private func isShellCommandUserText(_ text: String) -> Bool {
     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
     return trimmed.hasPrefix("!") || trimmed.hasPrefix("<user_shell_command>")
@@ -558,6 +563,7 @@ private func isBootstrapUserText(_ text: String, sessionInstructions: String?) -
     if trimmed.isEmpty { return true }
     if trimmed.hasPrefix("<environment_context>") { return true }
     if trimmed.hasPrefix("<user_instructions>") { return true }
+    if isAgentsInstructionText(trimmed) { return true }
     if let sessionInstructions, !sessionInstructions.isEmpty, trimmed.contains(sessionInstructions) {
         return true
     }

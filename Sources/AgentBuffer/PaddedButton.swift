@@ -13,12 +13,8 @@ final class PaddedButton: NSButton {
         }
     }
 
-    private let hoverBackgroundColor = NSColor(name: nil) { appearance in
-        if appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua {
-            return NSColor.white.withAlphaComponent(0.12)
-        }
-        return NSColor.black.withAlphaComponent(0.08)
-    }
+    private let hoverLightColor = NSColor.black.withAlphaComponent(0.08)
+    private let hoverDarkColor = NSColor.white.withAlphaComponent(0.18)
     private var hoverTrackingArea: NSTrackingArea?
     private var isHovering = false
     private let hoverLayer = CALayer()
@@ -89,7 +85,6 @@ final class PaddedButton: NSButton {
 
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
-        hoverLayer.backgroundColor = hoverBackgroundColor.cgColor
         updateHoverAppearance()
     }
 
@@ -126,7 +121,7 @@ final class PaddedButton: NSButton {
         wantsLayer = true
         layer?.cornerCurve = .continuous
         layer?.masksToBounds = true
-        hoverLayer.backgroundColor = hoverBackgroundColor.cgColor
+        hoverLayer.backgroundColor = hoverLightColor.cgColor
         hoverLayer.cornerCurve = .continuous
         hoverLayer.isHidden = true
         hoverLayer.zPosition = -1
@@ -149,6 +144,8 @@ final class PaddedButton: NSButton {
             hoverLayer.isHidden = true
             return
         }
+        let match = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua])
+        hoverLayer.backgroundColor = (match == .darkAqua ? hoverDarkColor : hoverLightColor).cgColor
         hoverLayer.isHidden = !isHovering
     }
 

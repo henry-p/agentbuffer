@@ -4,3 +4,4 @@ dist/
 .swiftpm/
 *.app
 node_modules/
+.beads/daemon-*.log*
